@@ -3,6 +3,7 @@
 #include <tchar.h>
 #include <string.h>
 #include <stdio.h>
+#include <strsafe.h>
 #include "AppendPath.h"
 
 /////////////////////////////////////////////////////////////////////////
@@ -38,23 +39,19 @@ int main(int argc, char *argv[])
     TCHAR szPath[BUFFERSIZE];
     TCHAR argBuffer[BUFFERSIZE];
 
-
-    //If no argument was specified, print a warning and exit
     if (argc < 2)
     {
         printf("Missing argument.");
         exit(1);
     }
 
-    //Get the command line arguments
     #ifdef _UNICODE
         arglist = CommandLineToArgvW(GetCommandLine(), &argc);
     #else
         arglist = argv;
     #endif
 
-    lpszArg = concatArgs(argBuffer, argc, arglist);
-
+    lpszArg = concatArgs(argBuffer, BUFFERSIZE, argc, arglist);
 
     if (_tcscmp(lpszArg,_TEXT("/?")) == 0)
     {
@@ -64,7 +61,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    //Read the current path from the registry
+    // Read the current path from the registry.
     lResult = RegOpenKeyEx(hkRoot,
                                lpszKeyName,
                                0,
@@ -78,7 +75,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    //Get the current path
+    // Get the current path.
     lResult = RegQueryValueEx(hk,
                                   lpszValueName,
                                   NULL,
@@ -95,36 +92,32 @@ int main(int argc, char *argv[])
 
     lpszCurrPath = szPath;
 
-    //Check if the argument is already part of the Path
+    // Check if the argument is already part of the Path
     lpszSearchResult = stristrW(lpszCurrPath, lpszArg);
-
-
+    
     if (!(lpszSearchResult == NULL))
     {
+        int c = (int)lpszSearchResult[0];
+        printf(">>>%i", c);
         printf("\nThe parameter is already part of the path and will not be added.\n");
         lResult = RegCloseKey(hk);
         exit(0);
     }
 
-    //Set the new path
-
-
-    //Check if we need to prepend an apostrophe before adding the new string
+    // Check if we need to prepend an apostrophe before adding the new string.
     if (lpszCurrPath[_tcslen(lpszCurrPath) - 1] == _TEXT(';'))
     {
-        //Found a trailing apostrophe, so just concatenate the strings.
+        // Found a trailing apostrophe, so just concatenate the strings.
         lpszNewPath = _tcscat(lpszCurrPath, lpszArg);
     }
     else
     {
-        //Did not find a trailing apostrophe, so add one.
+        // Did not find a trailing apostrophe, so add one.
         LPTSTR lpszTemp = _tcscat(lpszCurrPath, _TEXT(";"));
         lpszNewPath = _tcscat(lpszTemp,lpszArg);
     }
 
-
-
-    //Update the key in the registry
+    // Update the key in the registry.
     lResult = 0;
 
     lResult = RegSetValueEx(hk,
@@ -143,10 +136,9 @@ int main(int argc, char *argv[])
 
     _tprintf(_TEXT("\nAppended %s to the path environment variable.\n"),lpszArg);
 
-    //Close the open key handle
     lResult = RegCloseKey(hk);
 
-    //Broadcast a message informing the system of the change
+    // Broadcast a message informing the system of the change.
     lResult = SendMessageTimeout(HWND_BROADCAST,
                                      WM_SETTINGCHANGE,
                                      0,
@@ -158,29 +150,25 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-TCHAR *concatArgs(TCHAR *pBuffer, int iArgs, TCHAR **pArgs)
+TCHAR *concatArgs(TCHAR *pBuffer, int bufferSize, int iArgs, TCHAR **pArgs)
 {
-    //Concatenate all parameters into one string, so the user doesn't need to use quotes
-
+    // Concatenate all parameters into one string, so the user doesn't need to use quotes.
     int i;
 
-    //Prefill the buffer with nulls
-    _tcsncpy(pBuffer, _TEXT("\0"), BUFFERSIZE - 1);
+    // Prefill the buffer with nulls.
+    _tcsncpy(pBuffer, _TEXT("\0"), bufferSize - 1);
 
-
-    //For each argument, add it to the buffer
+    // For each argument, add it to the buffer.
     for (i = 1; i < iArgs; i++)
     {
         if (i > 1)
         {
-            //Add a space between arguments if this is not the first one
-            _tcsncat(pBuffer, _TEXT(" "), BUFFERSIZE - 1 - _tcslen(pBuffer));
+            // Add a space between arguments if this is not the first one.
+            StringCchCat(pBuffer, bufferSize, _TEXT(" "));
         }
 
-        _tcsncat(pBuffer, pArgs[i], BUFFERSIZE - 1 - _tcslen(pBuffer));
-
+        int ret = StringCchCat(pBuffer, bufferSize, pArgs[i]);
     }
-
 
     return pBuffer;
 }
