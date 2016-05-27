@@ -1,4 +1,3 @@
-
 #include <windows.h>
 #include <tchar.h>
 #include <string.h>
@@ -15,7 +14,6 @@
 //   By:        mtreit
 //
 /////////////////////////////////////////////////////////////////////////
-
 
 int main(int argc, char *argv[])
 {
@@ -70,18 +68,19 @@ int main(int argc, char *argv[])
 
     if (!(lResult == ERROR_SUCCESS))
     {
-        printf("Error opening the registry. The error code was %i.",lResult);
+        printf("Error opening the registry. The error code was %i.", lResult);
         lResult = RegCloseKey(hk);
         exit(1);
     }
 
     // Get the current path.
-    lResult = RegQueryValueEx(hk,
-                                  lpszValueName,
-                                  NULL,
-                                  NULL,
-                                  (LPBYTE) szPath,
-                                  &dwBufSize);
+    lResult = RegQueryValueEx(
+        hk,
+        lpszValueName,
+        NULL,
+        NULL,
+        (LPBYTE) szPath,
+        &dwBufSize);
 
     if (!(lResult == ERROR_SUCCESS))
     {
@@ -98,7 +97,6 @@ int main(int argc, char *argv[])
     if (!(lpszSearchResult == NULL))
     {
         int c = (int)lpszSearchResult[0];
-        printf(">>>%i", c);
         printf("\nThe parameter is already part of the path and will not be added.\n");
         lResult = RegCloseKey(hk);
         exit(0);
@@ -108,44 +106,46 @@ int main(int argc, char *argv[])
     if (lpszCurrPath[_tcslen(lpszCurrPath) - 1] == _TEXT(';'))
     {
         // Found a trailing apostrophe, so just concatenate the strings.
-        lpszNewPath = _tcscat(lpszCurrPath, lpszArg);
+        lpszNewPath = StringCchCat(lpszCurrPath, _tcslen(lpszCurrPath), lpszArg);
     }
     else
     {
         // Did not find a trailing apostrophe, so add one.
-        LPTSTR lpszTemp = _tcscat(lpszCurrPath, _TEXT(";"));
-        lpszNewPath = _tcscat(lpszTemp,lpszArg);
+        LPTSTR lpszTemp = StringCchCat(lpszCurrPath, _tcslen(lpszCurrPath), _TEXT(";"));
+        lpszNewPath = StringCchCat(lpszTemp, _tcslen(lpszCurrPath), lpszArg);
     }
 
     // Update the key in the registry.
     lResult = 0;
 
-    lResult = RegSetValueEx(hk,
-                                lpszValueName,
-                                0,
-                                REG_EXPAND_SZ,
-                                (LPBYTE)lpszNewPath,
-                                _tcslen(lpszNewPath)  * sizeof(TCHAR));
+    lResult = RegSetValueEx(
+        hk,
+        lpszValueName,
+        0,
+        REG_EXPAND_SZ,
+        (LPBYTE)lpszNewPath,
+        _tcslen(lpszNewPath)  * sizeof(TCHAR));
 
     if (!(lResult == ERROR_SUCCESS))
     {
-        printf("Error writing the registry value. The error code was %i.",lResult);
+        printf("Error writing the registry value. The error code was %i.", lResult);
         lResult = RegCloseKey(hk);
         exit(1);
     }
 
-    _tprintf(_TEXT("\nAppended %s to the path environment variable.\n"),lpszArg);
+    _tprintf(_TEXT("\nAppended %s to the path environment variable.\n"), lpszArg);
 
     lResult = RegCloseKey(hk);
 
     // Broadcast a message informing the system of the change.
-    lResult = SendMessageTimeout(HWND_BROADCAST,
-                                     WM_SETTINGCHANGE,
-                                     0,
-                                     (LPARAM) _TEXT("Environment"),
-                                     SMTO_ABORTIFHUNG,
-                                     5000,
-                                     &dwReturnValue);
+    lResult = SendMessageTimeout(
+        HWND_BROADCAST,
+        WM_SETTINGCHANGE,
+        0,
+        (LPARAM) _TEXT("Environment"),
+        SMTO_ABORTIFHUNG,
+        5000,
+        &dwReturnValue);
 
     return 0;
 }
