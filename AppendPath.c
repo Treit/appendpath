@@ -18,7 +18,7 @@
 
 int main(int argc, char *argv[])
 {
-    #define BUFFERSIZE 1024
+    #define BUFFERSIZE 1024 * 4
 
     LONG lResult;
     DWORD dwBufSize = BUFFERSIZE;
