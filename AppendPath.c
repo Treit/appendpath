@@ -60,11 +60,12 @@ int main(int argc, char *argv[])
     }
 
     // Read the current path from the registry.
-    lResult = RegOpenKeyEx(hkRoot,
-                               lpszKeyName,
-                               0,
-                               KEY_ALL_ACCESS,
-                               &hk);
+    lResult = RegOpenKeyEx(
+        hkRoot,
+        lpszKeyName,
+        0,
+        KEY_ALL_ACCESS,
+        &hk);
 
     if (!(lResult == ERROR_SUCCESS))
     {
@@ -106,13 +107,13 @@ int main(int argc, char *argv[])
     if (lpszCurrPath[_tcslen(lpszCurrPath) - 1] == _TEXT(';'))
     {
         // Found a trailing apostrophe, so just concatenate the strings.
-        lpszNewPath = StringCchCat(lpszCurrPath, _tcslen(lpszCurrPath), lpszArg);
+        StringCchCat(lpszCurrPath, BUFFERSIZE, lpszArg);
     }
     else
     {
         // Did not find a trailing apostrophe, so add one.
-        LPTSTR lpszTemp = StringCchCat(lpszCurrPath, _tcslen(lpszCurrPath), _TEXT(";"));
-        lpszNewPath = StringCchCat(lpszTemp, _tcslen(lpszCurrPath), lpszArg);
+        StringCchCat(lpszCurrPath, BUFFERSIZE, _TEXT(";"));
+        StringCchCat(lpszCurrPath, BUFFERSIZE, lpszArg);
     }
 
     // Update the key in the registry.
@@ -123,8 +124,8 @@ int main(int argc, char *argv[])
         lpszValueName,
         0,
         REG_EXPAND_SZ,
-        (LPBYTE)lpszNewPath,
-        _tcslen(lpszNewPath)  * sizeof(TCHAR));
+        (LPBYTE)lpszCurrPath,
+        _tcslen(lpszCurrPath)  * sizeof(TCHAR));
 
     if (!(lResult == ERROR_SUCCESS))
     {
