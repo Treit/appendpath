@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
     
     if (!(lpszSearchResult == NULL))
     {
-        int c = (int)lpszSearchResult[0];
         printf("\nThe parameter is already part of the path and will not be added.\n");
         lResult = RegCloseKey(hk);
         exit(0);
